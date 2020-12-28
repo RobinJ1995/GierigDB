@@ -4,7 +4,10 @@ const BodyParser = require('body-parser');
 
 const config = require('./config');
 
-app.use(BodyParser.json());
+app.use(BodyParser.json({
+	type: '*/*',
+	limit: '50mb'
+}));
 app.use(BodyParser.urlencoded({ extended: true }));
 
 require('./handlers')(app);
