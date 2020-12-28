@@ -8,6 +8,29 @@ const config = require('./config');
 const s3 = require('./s3client');
 const { v4: uuid } = require('uuid');
 
+const searchMatches = (query, item) => {
+	if (typeof item === 'string') {
+		return item.toLowerCase().includes(query);
+	} else if (typeof item === 'object') {
+		return Object.values(item)
+			.some(val => {
+				const valIsStr = typeof val === 'string';
+
+				if (val === query) {
+					return true;
+				} else if (valIsStr && String(val).toLowerCase().includes(query)) {
+					return true;
+				} else if (JSON.stringify(val).toLowerCase().includes(query)) {
+					return true;
+				}
+
+				return false;
+			});
+	}
+
+	return false;
+};
+
 class Collection {
 	constructor(name) {
 		this._initialised = false;
@@ -55,36 +78,33 @@ class Collection {
 
 	search = query => {
 		const queryLc = checkNotEmpty(query);
+		let searchStart;
 
 		return this._awaitInitialisation(() => {
-			return Object.keys(this.data).filter(key => {
-				const item = this.data[key];
+			searchStart = new Date().getTime();
+			console.info(`Starting search with query="${query}" in collection=${this.name}...`);
+			
+			const results = {};
+			for (const key in this.data) {
+				if (new Date().getTime() >= (searchStart + config.search.timeout_ms)) {
+					console.warn(`Search with query="${query}" in collection=${this.name} has been running for ≥${config.search.timeout_ms}ms. Ending search.`);
 
-				if (typeof item === 'string') {
-					return item.toLowerCase().includes(queryLc);
-				} else if (typeof item === 'object') {
-					return Object.values(item)
-						.some(val => {
-							const valIsStr = typeof val === 'string';
-							
-							if (val === queryLc) {
-								return true;
-							} else if (valIsStr && String(val).toLowerCase().includes(queryLc)) {
-								return true;
-							} else if (JSON.stringify(val).toLowerCase().includes(queryLc)) {
-								return true;
-							}
-
-							return false;
-						});
+					return results;
 				}
 
-				return false;
-			})
-			.reduce((acc, cur) => ({
-				...acc,
-				[cur]: this.data[cur]
-			}), {});
+				const item = this.data[key];
+				if (searchMatches(queryLc, item)) {
+					results[key] = item;
+				}
+			}
+
+			return results;
+		})
+		.then(x => {
+			const searchTime = new Date().getTime() - searchStart;
+			console.info(`Search for query="${query}" in collection=${this.name} returned ${Object.keys(x).length}/${Object.keys(this.data).length} entries in ${searchTime}ms.`);
+
+			return x;
 		});
 	}
 
