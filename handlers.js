@@ -22,6 +22,11 @@ module.exports = app => {
 			.then(data => res.status(200).send({ key: req.params.key, data }));
 	});
 
+	app.get('/:coll/search/:query', (req, res) => {
+		getCollection(req.params.coll).search(req.params.query)
+			.then(data => res.status(200).send(data));
+	});
+
 	app.post('/:coll', (req, res) => {
 		getCollection(req.params.coll).add(req.body)
 			.then(key => res.status(200).send({ key: key, data: req.body }));

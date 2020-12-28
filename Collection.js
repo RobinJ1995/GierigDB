@@ -53,6 +53,41 @@ class Collection {
 		});
 	}
 
+	search = query => {
+		const queryLc = checkNotEmpty(query);
+
+		return this._awaitInitialisation(() => {
+			return Object.keys(this.data).filter(key => {
+				const item = this.data[key];
+
+				if (typeof item === 'string') {
+					return item.toLowerCase().includes(queryLc);
+				} else if (typeof item === 'object') {
+					return Object.values(item)
+						.some(val => {
+							const valIsStr = typeof val === 'string';
+							
+							if (val === queryLc) {
+								return true;
+							} else if (valIsStr && String(val).toLowerCase().includes(queryLc)) {
+								return true;
+							} else if (JSON.stringify(val).toLowerCase().includes(queryLc)) {
+								return true;
+							}
+
+							return false;
+						});
+				}
+
+				return false;
+			})
+			.reduce((acc, cur) => ({
+				...acc,
+				[cur]: this.data[cur]
+			}), {});
+		});
+	}
+
 	replaceEntireCollection = data => {
 		return this._awaitInitialisation(() => {
 			console.warn(`Replacing data for entire collection=${this.name}...`);
