@@ -7,10 +7,11 @@ const {
 const config = require('./config');
 const s3 = require('./s3client');
 const { v4: uuid } = require('uuid');
+const { removeDiacriticalMarks } = require('remove-diacritical-marks');
 
 const searchMatches = (query, item) => {
 	if (typeof item === 'string') {
-		return item.toLowerCase().includes(query);
+		return removeDiacriticalMarks(item).toLowerCase().includes(query);
 	} else if (typeof item === 'object') {
 		return Object.values(item)
 			.some(val => {
@@ -18,7 +19,7 @@ const searchMatches = (query, item) => {
 
 				if (val === query) {
 					return true;
-				} else if (valIsStr && String(val).toLowerCase().includes(query)) {
+				} else if (valIsStr && removeDiacriticalMarks(String(val)).toLowerCase().includes(query)) {
 					return true;
 				} else if (JSON.stringify(val).toLowerCase().includes(query)) {
 					return true;
@@ -77,7 +78,7 @@ class Collection {
 	}
 
 	search = query => {
-		const queryLc = checkNotEmpty(query);
+		const queryLc = removeDiacriticalMarks(checkNotEmpty(query)).toLowerCase();
 		let searchStart;
 
 		return this._awaitInitialisation(() => {
