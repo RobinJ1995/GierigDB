@@ -1,0 +1,19 @@
+name: Build Docker image
+on:
+    push:
+        branches:
+            - master
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@master
+            - name: Publish to Github Docker registry
+              uses: elgohr/Publish-Docker-Github-Action@master
+              with:
+                  name: robinj1995/gierigdb/gierigdb
+                  registry: docker.pkg.github.com
+                  username: RobinJ1995
+                  password: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+                  cache: ${{ github.event_name != 'schedule' }}
+                  snapshot: true
