@@ -119,7 +119,7 @@ class Collection {
 			const searchTime = new Date().getTime() - searchStart;
 			console.info(`Search for query="${query}" in collection=${this.name} returned ${Object.keys(x).length}/${Object.keys(this.data).length} entries in ${searchTime}ms.`);
 
-			return x;
+			return clone(x);
 		});
 	}
 
