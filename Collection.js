@@ -8,6 +8,7 @@ const config = require('./config');
 const s3 = require('./s3client');
 const { v4: uuid } = require('uuid');
 const { removeDiacriticalMarks } = require('remove-diacritical-marks');
+const gc = require('./gc');
 
 const searchMatches = (query, item) => {
 	if (typeof item === 'string') {
@@ -34,11 +35,17 @@ const searchMatches = (query, item) => {
 
 class Collection {
 	constructor(name) {
+		this._initialising = false;
 		this._initialised = false;
+		this._locked = false;
+
+		this._lastActivity = null;
+		this._lastWriteOperation = null;
 
 		this.name = checkNotEmpty(name);
+		this.data = null;
 
-		this._load();
+		this._setupGc();
 	}
 
 	add = val => {
@@ -119,7 +126,8 @@ class Collection {
 		}).then(() => void 0);
 	}
 
-	_load = () => {
+	_load = () => this._withLock(() => {
+		this._initialising = true;
 		console.info(`Retrieving data for collection=${this.name} from bucket=${config.s3.bucket}...`);
 
 		const req = {
@@ -133,6 +141,8 @@ class Collection {
 			.then(data => {
 				this.data = clone(data);
 				this._initialised = true;
+				this._initialising = false;
+				this._lastActivity = new Date();
 
 				console.info(`Retrieved ${Object.keys(this.data).length} entries for collection=${this.name} from bucket=${config.s3.bucket}.`);
 			}).catch(err => {
@@ -140,12 +150,37 @@ class Collection {
 					console.warn(`No data found for collection=${this.name} in bucket=${config.s3.bucket}. Initialising as an empty collection.`);
 					this.data = {};
 					this._initialised = true;
+					this._initialising = false;
 
 					return;
 				}
 
-				throw new Error(`Initialisation failed for collection=${this.name}.`, err);
+				console.error(`Initialisation failed for collection=${this.name}.`, err)
+				throw new Error(`Initialisation failed for collection=${this.name}.`);
 			});
+	})
+
+	_setupGc = () => {
+		setInterval(() => {
+			if (!this._initialised || !this._lastActivity || this._initialising) {
+				return;
+			}
+
+			const now = new Date().getTime();
+			const timeBeforeTimeoutReached = (this._lastActivity.getTime() + config.gc.clear_after_ms) - now;
+			if (timeBeforeTimeoutReached <= 0) {
+				console.warn(`Last activity on collection=${this.name} was ${now - this._lastActivity.getTime()}ms ago. Clearing data from memory...`);
+
+				this._withLock(() => {
+					this._initialised = false;
+					this._initialising = false;
+					this.data = null;
+					gc();
+
+					console.info(`Collection=${this.name} de-initialised.`);
+				});
+			}
+		}, config.gc.interval_ms);
 	}
 
 	_awaitInitialisation = (cb) => {
@@ -155,15 +190,53 @@ class Collection {
 					return resolve();
 				}
 
+				if (!this._initialising) {
+					console.info(`Collection=${this.name} is not initialised. Starting initialisation...`);
+					return this._load()
+						.then(() => resolve());
+				}
+
 				console.info(`Waiting until collection=${this.name} has been initialised...`);
 				setTimeout(check, 100);
 			};
 
 			check();
-		}).then(() => cb());
+		}).then(() => cb())
+		.then(x => {
+			this._lastActivity = new Date();
+
+			return x;
+		});
 	}
 
-	_persist = () => {
+	_withLock = (cb) => {
+		return new Promise((resolve, reject) => {
+			const check = () => {
+				if (!this._locked) {
+					return resolve();
+				}
+
+				console.info(`Waiting for lock on collection=${this.name}...`);
+				setTimeout(check, 100);
+			};
+
+			check();
+		}).then(() => {
+			this._locked = true;
+
+			return cb();
+		}).then(x => {
+			this._locked = false;
+
+			return x;
+		}).catch(err => {
+			this._locked = false;
+
+			throw err;
+		})
+	}
+
+	_persist = () => this._withLock(() => {
 		console.info(`Persisting collection=${this.name} with ${Object.keys(this.data).length} entries to bucket=${config.s3.bucket}...`);
 
 		const jsonData = JSON.stringify(this.data, undefined, 4);
@@ -175,8 +248,14 @@ class Collection {
 		};
 
 		return s3.putObject(req).promise()
+			.then(() => {
+				const now = new Date();
+
+				this._lastActivity = now;
+				this._lastWriteOperation = now;
+			})
 			.then(() => console.info(`Collection=${this.name} persisted to bucket=${config.s3.bucket}.`));
-	}
+	})
 }
 
 module.exports = Collection;

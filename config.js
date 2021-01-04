@@ -1,10 +1,11 @@
 const {
-	checkNotEmpty
+	checkNotEmpty,
+	tryParseInt
 } = require('./utils');
 
 module.exports = {
 	http: {
-		port: process.env.PORT ?? 9009,
+		port: tryParseInt(process.env.PORT) ?? 9009,
 		request: {
 			body: {
 				max_size: process.env.HTTP_REQUEST_BODY_MAX_SIZE ?? '50mb'
@@ -18,6 +19,10 @@ module.exports = {
 		bucket: checkNotEmpty(process.env.S3_BUCKET)
 	},
 	search: {
-		timeout_ms: process.env.SEARCH_TIMEOUT_MS ?? 2500
+		timeout_ms: tryParseInt(process.env.SEARCH_TIMEOUT_MS) ?? 1000 * 2.5
+	},
+	gc: {
+		interval_ms: tryParseInt(process.env.GC_INTERVAL_MS) ?? 1000 * 60,
+		clear_after_ms: tryParseInt(process.env.GC_CLEAR_AFTER_MS) ?? 1000 * 60 * 30
 	}
-}
+};

@@ -24,9 +24,23 @@ const checkIsNumberOrString = val => {
 
 const clone = obj => JSON.parse(JSON.stringify(checkNotNull(obj)));
 
+const tryParseInt = x => {
+	try {
+		const val = parseInt(x);
+		if (!isNaN(val) && isFinite(val)) {
+			return val;
+		}
+
+		return x;
+	} catch {
+		return x;
+	}
+}
+
 module.exports = {
 	checkNotNull,
 	checkNotEmpty,
 	checkIsNumberOrString,
-	clone
+	clone,
+	tryParseInt
 };

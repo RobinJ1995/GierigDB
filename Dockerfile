@@ -8,4 +8,4 @@ RUN npm ci
 
 COPY . ./
 
-CMD ["node", "main.js"]
+CMD ["node", "--expose-gc", "main.js"]
