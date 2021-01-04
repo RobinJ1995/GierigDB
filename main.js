@@ -6,7 +6,7 @@ const config = require('./config');
 
 app.use(BodyParser.json({
 	type: '*/*',
-	limit: '50mb'
+	limit: config.http.request.body.max_size
 }));
 app.use(BodyParser.urlencoded({ extended: true }));
 

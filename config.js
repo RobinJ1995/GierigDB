@@ -4,7 +4,12 @@ const {
 
 module.exports = {
 	http: {
-		port: process.env.PORT ?? 9009
+		port: process.env.PORT ?? 9009,
+		request: {
+			body: {
+				max_size: process.env.HTTP_REQUEST_BODY_MAX_SIZE ?? '50mb'
+			}
+		}
 	},
 	s3: {
 		endpoint: process.env.S3_ENDPOINT,
