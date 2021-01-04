@@ -23,6 +23,7 @@ module.exports = {
 	},
 	gc: {
 		interval_ms: tryParseInt(process.env.GC_INTERVAL_MS) ?? 1000 * 60,
-		clear_after_ms: tryParseInt(process.env.GC_CLEAR_AFTER_MS) ?? 1000 * 60 * 30
+		clear_after_ms: tryParseInt(process.env.GC_CLEAR_AFTER_MS) ?? 1000 * 60 * 15,
+		gc_every_ms: tryParseInt(process.env.GC_GC_EVERY_MS) ?? 1000 * 60 * 5,
 	}
 };

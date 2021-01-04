@@ -1,4 +1,6 @@
 require('console-stamp')(console);
+require('./force_gc_loop');
+
 const app = require('express')();
 const BodyParser = require('body-parser');
 
