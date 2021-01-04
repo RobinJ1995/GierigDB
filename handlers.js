@@ -23,7 +23,7 @@ module.exports = app => {
 	});
 
 	app.get('/:coll/search/:query', (req, res) => {
-		getCollection(req.params.coll).search(req.params.query)
+		getCollection(req.params.coll).search(req, req.params.query)
 			.then(data => res.status(200).send(data));
 	});
 

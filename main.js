@@ -4,6 +4,7 @@ const BodyParser = require('body-parser');
 
 const config = require('./config');
 
+app.use(require('./middleware/request_cancelled'));
 app.use(BodyParser.json({
 	type: '*/*',
 	limit: config.http.request.body.max_size

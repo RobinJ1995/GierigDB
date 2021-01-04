@@ -84,7 +84,7 @@ class Collection {
 		});
 	}
 
-	search = query => {
+	search = (req, query) => {
 		const queryLc = removeDiacriticalMarks(checkNotEmpty(query)).toLowerCase();
 		let searchStart;
 
@@ -94,7 +94,10 @@ class Collection {
 			
 			const results = {};
 			for (const key in this.data) {
-				if (new Date().getTime() >= (searchStart + config.search.timeout_ms)) {
+				if (req.cancelled) {
+					console.info(`Search with query="${query} in collection=${this.name} was cancelled. Ending search without returning results.`);
+					return false;
+				} else if (new Date().getTime() >= (searchStart + config.search.timeout_ms)) {
 					console.warn(`Search with query="${query}" in collection=${this.name} has been running for ≥${config.search.timeout_ms}ms. Ending search.`);
 
 					return results;
@@ -109,6 +112,10 @@ class Collection {
 			return results;
 		})
 		.then(x => {
+			if (x === false) {
+				return {};
+			}
+
 			const searchTime = new Date().getTime() - searchStart;
 			console.info(`Search for query="${query}" in collection=${this.name} returned ${Object.keys(x).length}/${Object.keys(this.data).length} entries in ${searchTime}ms.`);
 
