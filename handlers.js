@@ -27,7 +27,11 @@ module.exports = app => {
 	app.get('/:coll/search/:query', (req, res) => {
 		const limit = tryParseInt(req.query.limit) ?? null;
 		getCollection(req.params.coll).search(req, req.params.query, limit)
-			.then(data => res.status(200).send(data));
+			.then(data => res.status(200).send(data))
+			.catch(error => {
+				console.error(`Search for query="${req.params.query}" in collection=${req.params.coll} failed.`, error);
+				res.status(500).send({ error })
+			});
 	});
 
 	app.post('/:coll', (req, res) => {
