@@ -84,7 +84,7 @@ class Collection {
 		});
 	}
 
-	search = (req, query) => {
+	search = (req, query, limit = null) => {
 		const queryLc = removeDiacriticalMarks(checkNotEmpty(query)).toLowerCase();
 		let searchStart;
 
@@ -93,6 +93,7 @@ class Collection {
 			console.info(`Starting search with query="${query}" in collection=${this.name}...`);
 			
 			const results = {};
+			let nResults = 0;
 			for (const key in this.data) {
 				if (req.cancelled) {
 					console.info(`Search with query="${query} in collection=${this.name} was cancelled. Ending search without returning results.`);
@@ -101,11 +102,16 @@ class Collection {
 					console.warn(`Search with query="${query}" in collection=${this.name} has been running for ≥${config.search.timeout_ms}ms. Ending search.`);
 
 					return results;
+				} else if (limit !== null && nResults >= limit) {
+					console.info(`Found ${nResults} matches for search with query="${query}", and limit is ${limit}. Ending search.`)
+
+					return results;
 				}
 
 				const item = this.data[key];
 				if (searchMatches(queryLc, item)) {
 					results[key] = item;
+					nResults++;
 				}
 			}
 

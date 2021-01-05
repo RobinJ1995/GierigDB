@@ -1,5 +1,7 @@
 const Collection = require('./Collection');
-const { checkNotEmpty, checkIsNumberOrString } = require('./utils');
+const { checkNotEmpty,
+	checkIsNumberOrString,
+	tryParseInt } = require('./utils');
 
 const collections = {};
 
@@ -23,7 +25,8 @@ module.exports = app => {
 	});
 
 	app.get('/:coll/search/:query', (req, res) => {
-		getCollection(req.params.coll).search(req, req.params.query)
+		const limit = tryParseInt(req.query.limit) ?? null;
+		getCollection(req.params.coll).search(req, req.params.query, limit)
 			.then(data => res.status(200).send(data));
 	});
 
