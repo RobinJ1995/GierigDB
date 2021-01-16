@@ -49,8 +49,18 @@ module.exports = app => {
 			.then(key => res.status(200).send({ key: req.params.key, data: req.body }));
 	});
 
+	app.patch('/:coll', (req, res) => {
+		getCollection(req.params.coll).appendToCollection(req.body)
+			.then(() => res.status(204).send());
+	});
+
 	app.put('/:coll', (req, res) => {
 		getCollection(req.params.coll).replaceEntireCollection(req.body)
+			.then(() => res.status(204).send());
+	});
+
+	app.delete('/:coll', (req, res) => {
+		getCollection(req.params.coll).replaceEntireCollection({})
 			.then(() => res.status(204).send());
 	});
 }

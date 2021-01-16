@@ -139,6 +139,19 @@ class Collection {
 		}).then(() => void 0);
 	}
 
+	appendToCollection = data => {
+		return this._awaitInitialisation(() => {
+			console.warn(`Appending to collection=${this.name}...`);
+
+			this.data = {
+				...this.data,
+				...clone(data)
+			};
+
+			return this._persist();
+		}).then(() => void 0);
+	}
+
 	_load = () => this._withLock(() => {
 		this._initialising = true;
 		console.info(`Retrieving data for collection=${this.name} from bucket=${config.s3.bucket}...`);
