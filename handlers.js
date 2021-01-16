@@ -51,12 +51,12 @@ module.exports = app => {
 
 	app.patch('/:coll', (req, res) => {
 		getCollection(req.params.coll).appendToCollection(req.body)
-			.then(() => res.status(204).send());
+			.then(nNewItems => res.status(200).send({ n: nNewItems }));
 	});
 
 	app.put('/:coll', (req, res) => {
 		getCollection(req.params.coll).replaceEntireCollection(req.body)
-			.then(() => res.status(204).send());
+			.then(n => res.status(200).send({ n }));
 	});
 
 	app.delete('/:coll', (req, res) => {

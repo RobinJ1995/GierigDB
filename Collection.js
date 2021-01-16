@@ -140,6 +140,8 @@ class Collection {
 	}
 
 	appendToCollection = data => {
+		const nInitialItems = Object.keys(this.data).length;
+
 		return this._awaitInitialisation(() => {
 			console.warn(`Appending to collection=${this.name}...`);
 
@@ -148,8 +150,11 @@ class Collection {
 				...clone(data)
 			};
 
-			return this._persist();
-		}).then(() => void 0);
+			const nNewItems = Object.keys(this.data).length - nInitialItems;
+
+			return this._persist()
+				.then(() => nNewItems)
+		});
 	}
 
 	_load = () => this._withLock(() => {
