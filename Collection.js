@@ -140,9 +140,9 @@ class Collection {
 	}
 
 	appendToCollection = data => {
-		const nInitialItems = Object.keys(this.data).length;
-
 		return this._awaitInitialisation(() => {
+			const nInitialItems = Object.keys(this.data).length;
+			
 			console.warn(`Appending to collection=${this.name}...`);
 
 			this.data = {
