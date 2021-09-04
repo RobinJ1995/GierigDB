@@ -12,6 +12,11 @@ app.use(BodyParser.json({
 	limit: config.http.request.body.max_size
 }));
 app.use(BodyParser.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+	console.log(`${req.method} ${req.originalUrl}`);
+
+	next();
+});
 
 require('./handlers')(app);
 
