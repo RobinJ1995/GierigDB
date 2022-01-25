@@ -43,6 +43,7 @@ class Collection {
 		this._lastWriteOperation = null;
 
 		this.name = checkNotEmpty(name);
+		this.fileName = `${this.name}.json`;
 		this.data = null;
 
 		this._setupGc();
@@ -163,7 +164,7 @@ class Collection {
 
 		const req = {
 			Bucket: config.s3.bucket,
-			Key: this.name
+			Key: this.fileName
 		};
 
 		return s3.getObject(req).promise()
@@ -274,7 +275,7 @@ class Collection {
 
 		const req = {
 			Bucket: config.s3.bucket,
-			Key: this.name,
+			Key: this.fileName,
 			Body: jsonData
 		};
 
